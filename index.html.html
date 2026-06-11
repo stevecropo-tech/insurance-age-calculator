@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insurance Age Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:              #0D1117;
+      --surface:         #161B22;
+      --surface-raised:  #1C2128;
+      --border:          #30363D;
+      --border-soft:     #21262D;
+      --text-primary:    #E6EDF3;
+      --text-secondary:  #8B949E;
+      --text-muted:      #484F58;
+      --gold:            #C9A84C;
+      --gold-light:      #E8C96A;
+      --gold-dim:        rgba(201,168,76,0.12);
+      --gold-border:     rgba(201,168,76,0.28);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px 64px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 8px 32px rgba(0,0,0,0.5),
+        0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .card-header {
+      padding: 22px 28px 18px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-header-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .card-header h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .card-body {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Three-field date selector ── */
+    .date-fields {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.6fr;
+      gap: 8px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field-group > label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--text-muted);
+      border-bottom: none;
+      pointer-events: none;
+      margin-top: 2px;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 8px 10px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    select { padding-right: 28px; }
+
+    select:focus, input[type="number"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.14);
+    }
+
+    select:hover, input[type="number"]:hover {
+      border-color: #484F58;
+    }
+
+    input[type="number"] {
+      cursor: text;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: 0.25;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    /* ── Ref date section ── */
+    .ref-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ref-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .ref-toggle-btn:hover { color: var(--text-secondary); }
+
+    .ref-toggle-btn:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+
+    .ref-toggle-btn .chevron {
+      transition: transform 0.2s ease;
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .ref-toggle-btn.open .chevron {
+      transform: rotate(90deg);
+    }
+
+    .ref-today-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .ref-today-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .ref-today-value {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-reset:hover  { border-color: var(--gold); color: var(--gold); }
+    .btn-reset:active { transform: scale(0.96); }
+    .btn-reset:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+    .ref-expanded-fields {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .ref-expanded-fields.open {
+      display: block;
+    }
+
+    /* ── Results panel ── */
+    .results-placeholder {
+      text-align: center;
+      padding: 36px 0 28px;
+      color: var(--text-muted);
+      font-size: 13px;
+      letter-spacing: 0.01em;
+    }
+
+    /* Insurance age hero */
+    .hero {
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      border-radius: 12px;
+      padding: 24px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.6);
+      position: relative;
+    }
+
+    .hero-number {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 72px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      position: relative;
+    }
+
+    .hero-note {
+      font-size: 12px;
+      color: rgba(201,168,76,0.65);
+      text-align: center;
+      margin-top: 4px;
+      position: relative;
+    }
+
+    /* Exact age row */
+    .exact-age-block { }
+
+    .exact-age-value {
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .age-num {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .age-unit {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 3px;
+      margin-right: 12px;
+    }
+
+    /* Proximity section */
+    .proximity-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .prox-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .prox-card.closer {
+      border-color: rgba(201,168,76,0.25);
+      background: rgba(201,168,76,0.05);
+    }
+
+    .prox-card-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .prox-card.closer .prox-card-label {
+      color: rgba(201,168,76,0.55);
+    }
+
+    .prox-days {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    .prox-card.closer .prox-days {
+      color: var(--gold);
+    }
+
+    .prox-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .prox-closer-badge {
+      display: inline-block;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      padding: 1px 5px;
+      margin-top: 5px;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      margin-top: 4px;
+    }
+
+    .progress-track {
+      height: 5px;
+      background: var(--border-soft);
+      border-radius: 3px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .progress-fill {
+      position: absolute;
+      inset-block: 0;
+      left: 0;
+      background: linear-gradient(90deg, #2A3140, var(--gold));
+      border-radius: 3px;
+      transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-dot {
+      position: absolute;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      background: var(--gold);
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px rgba(201,168,76,0.6);
+      transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-ends {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+    }
+
+    .progress-end-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-icon">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="12" height="12" rx="2" stroke="#C9A84C" stroke-width="1.25"/>
+        <path d="M5 8h6M8 5v6" stroke="#C9A84C" stroke-width="1.25" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Insurance Age Calculator</h1>
+  </div>
+
+  <div class="card-body">
+
+    <!-- DOB -->
+    <div>
+      <div class="section-label">Date of Birth</div>
+      <div class="date-fields">
+        <div class="field-group">
+          <label for="dob-month">Month</label>
+          <div class="select-wrap">
+            <select id="dob-month" tabindex="1">
+              <option value="">Month</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="dob-day">Day</label>
+          <div class="select-wrap">
+            <select id="dob-day" tabindex="2"></select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="dob-year">Year</label>
+          <input type="number" id="dob-year" placeholder="YYYY" min="1900" max="2099" tabindex="3">
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Reference Date -->
+    <div>
+      <div class="ref-header">
+        <button class="ref-toggle-btn" id="ref-toggle-btn" onclick="toggleRef()" aria-expanded="false" tabindex="4">
+          <span class="chevron">▶</span>
+          <span>Reference Date</span>
+        </button>
+        <button class="btn-reset" onclick="resetRef()" tabindex="5">Reset to Today</button>
+      </div>
+      <div class="ref-today-row">
+        <span class="ref-today-label">Using:</span>
+        <span class="ref-today-value" id="ref-display"></span>
+      </div>
+      <div class="ref-expanded-fields" id="ref-expanded">
+        <div class="date-fields">
+          <div class="field-group">
+            <label for="ref-month">Month</label>
+            <div class="select-wrap">
+              <select id="ref-month" tabindex="6">
+                <option value="">Month</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="ref-day">Day</label>
+            <div class="select-wrap">
+              <select id="ref-day" tabindex="7"></select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="ref-year">Year</label>
+            <input type="number" id="ref-year" placeholder="YYYY" min="1900" max="2100" tabindex="8">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Results -->
+    <div id="results">
+      <div class="results-placeholder">Enter a date of birth to calculate</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /*
+   * TEST CASE VALIDATION
+   * ══════════════════════════════════════════════════════
+   * DOB:              June 26, 1972
+   * Reference date:   June 11, 2026
+   *
+   * Exact age:        53 years, 11 months, 16 days
+   *
+   * Last birthday:    June 26, 2025
+   * Next birthday:    June 26, 2026
+   *
+   * Days since last:  350 days
+   *   June 26→Dec 31 2025 = 4+31+31+30+31+30+31 = 188 days
+   *   Jan 1→June 11 2026  = 31+28+31+30+31+11   = 162 days
+   *   Total = 188 + 162 = 350 days
+   *
+   * Days until next:  15 days  (June 11 → June 26, 2026)
+   *
+   * Condition: daysUntil (15) ≤ daysSince (350)  → TRUE
+   *   → next birthday is closer
+   *   → Insurance Age = 53 + 1 = 54 ✓
+   *
+   * Day delta:        |350 − 15| = 335 days
+   * Note:             "Closer to 54th birthday by 335 days"
+   * ══════════════════════════════════════════════════════
+   */
+
+  const MONTH_NAMES = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+
+  let refOverride = null;
+
+  function localToday() {
+    if (refOverride) return refOverride;
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  }
+
+  function formatDate(d) {
+    return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+
+  function daysInMonth(month, year) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  function populateDaySelect(sel, month, year) {
+    const prev = sel.value;
+    const count = (month !== '' && year && String(year).length === 4)
+      ? daysInMonth(parseInt(month), parseInt(year))
+      : 31;
+    sel.innerHTML = '<option value="">Day</option>';
+    for (let i = 1; i <= count; i++) {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = i;
+      sel.appendChild(o);
+    }
+    const prevN = parseInt(prev);
+    if (prevN >= 1 && prevN <= count) sel.value = prev;
+  }
+
+  function calcExactAge(dob, ref) {
+    let yy = ref.getFullYear() - dob.getFullYear();
+    let mm = ref.getMonth()    - dob.getMonth();
+    let dd = ref.getDate()     - dob.getDate();
+    if (dd < 0) {
+      mm--;
+      dd += new Date(ref.getFullYear(), ref.getMonth(), 0).getDate();
+    }
+    if (mm < 0) { yy--; mm += 12; }
+    return { years: yy, months: mm, days: dd };
+  }
+
+  function lastBirthday(dob, ref) {
+    const ty = new Date(ref.getFullYear(), dob.getMonth(), dob.getDate());
+    return ty <= ref
+      ? ty
+      : new Date(ref.getFullYear() - 1, dob.getMonth(), dob.getDate());
+  }
+
+  function nextBirthday(dob, ref) {
+    const ty = new Date(ref.getFullYear(), dob.getMonth(), dob.getDate());
+    return ty > ref
+      ? ty
+      : new Date(ref.getFullYear() + 1, dob.getMonth(), dob.getDate());
+  }
+
+  function daysBetween(a, b) {
+    return Math.round((b - a) / 86400000);
+  }
+
+  function ordinal(n) {
+    const v = n % 100;
+    const s = ['th','st','nd','rd'];
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function render() {
+    const mVal = document.getElementById('dob-month').value;
+    const dVal = document.getElementById('dob-day').value;
+    const yVal = document.getElementById('dob-year').value;
+    const panel = document.getElementById('results');
+
+    if (mVal === '' || !dVal || !yVal || String(yVal).length < 4) {
+      panel.innerHTML = '<div class="results-placeholder">Enter a date of birth to calculate</div>';
+      return;
+    }
+
+    const dob = new Date(parseInt(yVal), parseInt(mVal), parseInt(dVal));
+    const ref = localToday();
+
+    if (dob >= ref) {
+      panel.innerHTML = '<div class="results-placeholder" style="color:var(--text-muted)">Date of birth must be in the past</div>';
+      return;
+    }
+
+    const { years, months: ageM, days: ageD } = calcExactAge(dob, ref);
+    const lbd = lastBirthday(dob, ref);
+    const nbd = nextBirthday(dob, ref);
+    const since  = daysBetween(lbd, ref);
+    const until  = daysBetween(ref, nbd);
+    const total  = since + until;
+    const pct    = total > 0 ? (since / total) * 100 : 0;
+    const insAge = until <= since ? years + 1 : years;
+    const closer = until <= since ? 'next' : 'last';
+    const delta  = Math.abs(since - until);
+
+    const note = closer === 'next'
+      ? `Closer to ${ordinal(insAge)} birthday by ${delta.toLocaleString()} day${delta !== 1 ? 's' : ''}`
+      : `Closer to ${ordinal(years)} birthday by ${delta.toLocaleString()} day${delta !== 1 ? 's' : ''}`;
+
+    panel.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div class="hero">
+          <div class="hero-label">Insurance Age</div>
+          <div class="hero-number">${insAge}</div>
+          <div class="hero-note">${note}</div>
+        </div>
+
+        <div class="exact-age-block">
+          <div class="section-label">Exact Age</div>
+          <div class="exact-age-value">
+            <span class="age-num">${years}</span><span class="age-unit">yr</span>
+            <span class="age-num">${ageM}</span><span class="age-unit">mo</span>
+            <span class="age-num">${ageD}</span><span class="age-unit">day${ageD !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Birthday Proximity</div>
+          <div class="proximity-cols">
+            <div class="prox-card ${closer === 'last' ? 'closer' : ''}">
+              <div class="prox-card-label">Since last birthday</div>
+              <div class="prox-days">${since.toLocaleString()}</div>
+              <div class="prox-sub">${formatDate(lbd)}</div>
+              ${closer === 'last' ? '<div class="prox-closer-badge">Closer</div>' : ''}
+            </div>
+            <div class="prox-card ${closer === 'next' ? 'closer' : ''}">
+              <div class="prox-card-label">Until next birthday</div>
+              <div class="prox-days">${until.toLocaleString()}</div>
+              <div class="prox-sub">${formatDate(nbd)}</div>
+              ${closer === 'next' ? '<div class="prox-closer-badge">Closer</div>' : ''}
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="pfill" style="width:${pct}%"></div>
+              <div class="progress-dot"  id="pdot"  style="left:${pct}%"></div>
+            </div>
+            <div class="progress-ends">
+              <span class="progress-end-label">${ordinal(years)} birthday</span>
+              <span class="progress-end-label">${ordinal(years + 1)} birthday</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    // Re-trigger transition after paint so animation fires
+    requestAnimationFrame(() => {
+      const fill = document.getElementById('pfill');
+      const dot  = document.getElementById('pdot');
+      if (fill) { fill.style.width  = pct + '%'; }
+      if (dot)  { dot.style.left   = pct + '%'; }
+    });
+  }
+
+  function updateRefDisplay() {
+    document.getElementById('ref-display').textContent = formatDate(localToday());
+  }
+
+  function toggleRef() {
+    const btn = document.getElementById('ref-toggle-btn');
+    const exp = document.getElementById('ref-expanded');
+    const open = exp.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+  }
+
+  function resetRef() {
+    refOverride = null;
+    document.getElementById('ref-month').value = '';
+    document.getElementById('ref-year').value  = '';
+    populateDaySelect(document.getElementById('ref-day'), '', '');
+    updateRefDisplay();
+    render();
+  }
+
+  function handleRefChange() {
+    const m = document.getElementById('ref-month').value;
+    const d = document.getElementById('ref-day').value;
+    const y = document.getElementById('ref-year').value;
+    if (m !== '' && d && y && String(y).length >= 4) {
+      refOverride = new Date(parseInt(y), parseInt(m), parseInt(d));
+    } else {
+      refOverride = null;
+    }
+    updateRefDisplay();
+    render();
+  }
+
+  // ── Wire up DOB fields ──
+  document.getElementById('dob-month').addEventListener('change', function () {
+    populateDaySelect(document.getElementById('dob-day'), this.value, document.getElementById('dob-year').value);
+    render();
+  });
+
+  document.getElementById('dob-day').addEventListener('change', render);
+
+  document.getElementById('dob-year').addEventListener('input', function () {
+    if (String(this.value).length === 4) {
+      populateDaySelect(document.getElementById('dob-day'), document.getElementById('dob-month').value, this.value);
+      render();
+    }
+  });
+
+  // ── Wire up Ref fields ──
+  document.getElementById('ref-month').addEventListener('change', function () {
+    populateDaySelect(document.getElementById('ref-day'), this.value, document.getElementById('ref-year').value);
+    handleRefChange();
+  });
+
+  document.getElementById('ref-day').addEventListener('change', handleRefChange);
+
+  document.getElementById('ref-year').addEventListener('input', function () {
+    if (String(this.value).length === 4) {
+      populateDaySelect(document.getElementById('ref-day'), document.getElementById('ref-month').value, this.value);
+      handleRefChange();
+    }
+  });
+
+  // ── Init ──
+  populateDaySelect(document.getElementById('dob-day'), '', '');
+  populateDaySelect(document.getElementById('ref-day'), '', '');
+  updateRefDisplay();
+</script>
+</body>
+</html>
